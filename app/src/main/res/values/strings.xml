@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Open Camera</string> <!-- shouldn't be translated, unless deemed appropriate e.g. alternative alphabets -->
+    <string name="app_name">Open Camera Lenses</string> <!-- shouldn't be translated, unless deemed appropriate e.g. alternative alphabets -->
     <string name="action_settings">Settings</string>
     <string name="action_popup">Popup settings</string>
     <string name="intro_ok">OK (This message won\'t show again)</string>
@@ -615,6 +615,8 @@
     <string name="preference_screen_processing_settings">Processing settings…</string>
 
     <string name="preference_noise_reduction_mode">Noise reduction algorithm</string>
+    <string name="preference_allow_digital_zoom">Allow digital zoom</string>
+    <string name="preference_allow_digital_zoom_summary">Digital zoom crops and upscales the image. When disabled, each lens is always used at its native field of view - use the switch camera/lens buttons to change lens instead.</string>
     <string name="preference_noise_reduction_mode_summary">Algorithm that the camera driver should use for applying noise reduction. The noise reduction algorithm attempts to improve image quality by removing excessive noise added by the capture process, especially in dark conditions. (Note that this is not related to the Noise Reduction photo mode, and in fact this setting is ignored in NR photo mode.)\n%s</string>
     <string name="noise_reduction_mode_default">Default</string>
     <string name="noise_reduction_mode_off">Off</string>

@@ -53,13 +53,13 @@ public class PreferenceSubProcessing extends PreferenceSubScreen {
         if( edge_mode_values != null && edge_mode_values.length > 0 ) {
             String [] edge_mode_entries = bundle.getStringArray("edge_modes_entries");
             if( edge_mode_entries != null && edge_mode_entries.length == edge_mode_values.length ) { // should always be true here, but just in case
-                MyPreferenceFragment.readFromBundle(this, edge_mode_values, edge_mode_entries, PreferenceKeys.EdgeModePreferenceKey, CameraController.EDGE_MODE_DEFAULT, "preferences_root");
+                MyPreferenceFragment.readFromBundle(this, edge_mode_values, edge_mode_entries, PreferenceKeys.EdgeModePreferenceKey, PreferenceKeys.EdgeModeDefault, "preferences_root");
                 has_edge_mode = true;
             }
         }
         if( MyDebug.LOG )
             Log.d(TAG, "has_edge_mode?: " + has_edge_mode);
-        if( !has_edge_mode && ( camera_open || sharedPreferences.getString(PreferenceKeys.EdgeModePreferenceKey, CameraController.EDGE_MODE_DEFAULT).equals(CameraController.EDGE_MODE_DEFAULT) ) ) {
+        if( !has_edge_mode && ( camera_open || sharedPreferences.getString(PreferenceKeys.EdgeModePreferenceKey, PreferenceKeys.EdgeModeDefault).equals(PreferenceKeys.EdgeModeDefault) ) ) {
             // if camera not open, we'll think this setting isn't supported - but should only remove
             // this preference if it's set to the default (otherwise if user sets to a non-default
             // value that causes camera to not open, user won't be able to put it back to the
@@ -74,13 +74,13 @@ public class PreferenceSubProcessing extends PreferenceSubScreen {
         if( noise_reduction_mode_values != null && noise_reduction_mode_values.length > 0 ) {
             String [] noise_reduction_mode_entries = bundle.getStringArray("noise_reduction_modes_entries");
             if( noise_reduction_mode_entries != null && noise_reduction_mode_entries.length == noise_reduction_mode_values.length ) { // should always be true here, but just in case
-                MyPreferenceFragment.readFromBundle(this, noise_reduction_mode_values, noise_reduction_mode_entries, PreferenceKeys.CameraNoiseReductionModePreferenceKey, CameraController.NOISE_REDUCTION_MODE_DEFAULT, "preferences_root");
+                MyPreferenceFragment.readFromBundle(this, noise_reduction_mode_values, noise_reduction_mode_entries, PreferenceKeys.CameraNoiseReductionModePreferenceKey, PreferenceKeys.CameraNoiseReductionModeDefault, "preferences_root");
                 has_noise_reduction_mode = true;
             }
         }
         if( MyDebug.LOG )
             Log.d(TAG, "has_noise_reduction_mode?: " + has_noise_reduction_mode);
-        if( !has_noise_reduction_mode && ( camera_open || sharedPreferences.getString(PreferenceKeys.CameraNoiseReductionModePreferenceKey, CameraController.NOISE_REDUCTION_MODE_DEFAULT).equals(CameraController.NOISE_REDUCTION_MODE_DEFAULT) ) ) {
+        if( !has_noise_reduction_mode && ( camera_open || sharedPreferences.getString(PreferenceKeys.CameraNoiseReductionModePreferenceKey, PreferenceKeys.CameraNoiseReductionModeDefault).equals(PreferenceKeys.CameraNoiseReductionModeDefault) ) ) {
             // if camera not open, we'll think this setting isn't supported - but should only remove
             // this preference if it's set to the default (otherwise if user sets to a non-default
             // value that causes camera to not open, user won't be able to put it back to the

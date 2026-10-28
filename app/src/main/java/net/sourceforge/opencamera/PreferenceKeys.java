@@ -89,6 +89,13 @@ public class PreferenceKeys {
 
     public static final String CameraNoiseReductionModePreferenceKey = "preference_noise_reduction_mode"; // n.b., this is for the Camera driver noise reduction mode, not Open Camera's NR photo mode
 
+    // default to no sharpening or noise reduction by the camera driver, so photos are as unprocessed as possible
+    public static final String EdgeModeDefault = "off";
+
+    public static final String CameraNoiseReductionModeDefault = "off";
+
+    public static final String AllowDigitalZoomPreferenceKey = "preference_allow_digital_zoom";
+
     public static final String ISOPreferenceKey = "preference_iso";
 
     public static final String ExposureTimePreferenceKey = "preference_exposure_time";

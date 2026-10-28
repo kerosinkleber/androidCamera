@@ -495,12 +495,12 @@ public class MyApplicationInterface extends BasicApplicationInterface {
 
     @Override
     public String getEdgeModePref() {
-        return sharedPreferences.getString(PreferenceKeys.EdgeModePreferenceKey, CameraController.EDGE_MODE_DEFAULT);
+        return sharedPreferences.getString(PreferenceKeys.EdgeModePreferenceKey, PreferenceKeys.EdgeModeDefault);
     }
 
     @Override
     public String getCameraNoiseReductionModePref() {
-        return sharedPreferences.getString(PreferenceKeys.CameraNoiseReductionModePreferenceKey, CameraController.NOISE_REDUCTION_MODE_DEFAULT);
+        return sharedPreferences.getString(PreferenceKeys.CameraNoiseReductionModePreferenceKey, PreferenceKeys.CameraNoiseReductionModeDefault);
     }
 
     @Override
@@ -1918,6 +1918,11 @@ public class MyApplicationInterface extends BasicApplicationInterface {
         }
         else if( isCameraExtensionPref() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&  !main_activity.getPreview().supportsZoomForCameraExtension(getCameraExtensionPref()) ) {
             // zoom not supported for camera extension
+            return false;
+        }
+        else if( !sharedPreferences.getBoolean(PreferenceKeys.AllowDigitalZoomPreferenceKey, false) ) {
+            // digital zoom crops and upscales the image, so is disabled unless the user enables it - use the
+            // lens selection to change field of view instead
             return false;
         }
         return true;

@@ -5,11 +5,19 @@ import net.sourceforge.opencamera.R;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
+import android.os.Build;
 import android.util.Log;
 import android.util.SizeF;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /** Provides support using Android 5's Camera 2 API
  *  android.hardware.camera2.*.
@@ -23,11 +31,97 @@ public class CameraControllerManager2 extends CameraControllerManager {
         this.context = context;
     }
 
+    /** Highest numeric camera ID probed when looking for cameras not reported by getCameraIdList().
+     */
+    private static final int MAX_HIDDEN_CAMERA_ID = 127;
+    private static String [] hidden_camera_ids; // cached result of findHiddenCameraIds()
+
+    /** Returns the camera IDs reported by CameraManager.getCameraIdList(), followed by any
+     *  additional camera IDs that the device supports but doesn't list. Some devices (e.g.,
+     *  Samsung Galaxy) only list a subset of their lenses to third party applications, but still
+     *  allow the other lenses to be opened directly by ID.
+     *  Hidden IDs are appended so that indices of the listed cameras are unchanged.
+     */
+    public static String [] getCameraIdList(CameraManager manager) throws CameraAccessException {
+        String [] listed_ids = manager.getCameraIdList();
+        String [] hidden_ids = getHiddenCameraIds(manager, listed_ids);
+        if( hidden_ids.length == 0 )
+            return listed_ids;
+        String [] ids = Arrays.copyOf(listed_ids, listed_ids.length + hidden_ids.length);
+        System.arraycopy(hidden_ids, 0, ids, listed_ids.length, hidden_ids.length);
+        return ids;
+    }
+
+    private static synchronized String [] getHiddenCameraIds(CameraManager manager, String [] listed_ids) {
+        if( hidden_camera_ids == null ) {
+            hidden_camera_ids = findHiddenCameraIds(manager, listed_ids);
+        }
+        return hidden_camera_ids;
+    }
+
+    private static String [] findHiddenCameraIds(CameraManager manager, String [] listed_ids) {
+        long debug_time = 0;
+        if( MyDebug.LOG ) {
+            debug_time = System.currentTimeMillis();
+        }
+        // skip IDs that are already reachable, either directly or as a physical camera of a listed logical camera
+        Set<String> known_ids = new HashSet<>(Arrays.asList(listed_ids));
+        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ) {
+            for(String id : listed_ids) {
+                try {
+                    known_ids.addAll(manager.getCameraCharacteristics(id).getPhysicalCameraIds());
+                }
+                catch(Throwable e) {
+                    MyDebug.logStackTrace(TAG, "failed to get physical camera ids for: " + id, e);
+                }
+            }
+        }
+
+        List<String> hidden_ids = new ArrayList<>();
+        for(int i=0;i<=MAX_HIDDEN_CAMERA_ID;i++) {
+            String id = String.valueOf(i);
+            if( known_ids.contains(id) )
+                continue;
+            try {
+                CameraCharacteristics characteristics = manager.getCameraCharacteristics(id);
+                if( isUsableHiddenCamera(characteristics) ) {
+                    if( MyDebug.LOG )
+                        Log.d(TAG, "found hidden camera: " + id);
+                    hidden_ids.add(id);
+                }
+            }
+            catch(Throwable e) {
+                // expected for IDs that don't exist
+            }
+        }
+        if( MyDebug.LOG )
+            Log.d(TAG, "findHiddenCameraIds: " + hidden_ids + " time: " + (System.currentTimeMillis() - debug_time));
+        return hidden_ids.toArray(new String[0]);
+    }
+
+    /** Whether a camera that isn't listed by getCameraIdList() is a normal colour camera that we
+     *  can use (rather than e.g. a depth or IR sensor).
+     */
+    private static boolean isUsableHiddenCamera(CameraCharacteristics characteristics) {
+        if( characteristics.get(CameraCharacteristics.LENS_FACING) == null )
+            return false;
+        if( !isHardwareLevelSupported(characteristics, CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED) )
+            return false;
+        int [] capabilities = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+        if( capabilities == null )
+            return false;
+        for(int capability : capabilities) {
+            if( capability == CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE )
+                return true;
+        }
+        return false;
+    }
+
     @Override
     public int getNumberOfCameras() {
         CameraManager manager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
         try {
-            return manager.getCameraIdList().length;
+            return getCameraIdList(manager).length;
         }
         catch(Throwable e) {
             // in theory we should only get CameraAccessException, but Google Play shows we can get a variety of exceptions
@@ -43,7 +137,7 @@ public class CameraControllerManager2 extends CameraControllerManager {
     public CameraController.Facing getFacing(int cameraId) {
         CameraManager manager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
         try {
-            String cameraIdS = manager.getCameraIdList()[cameraId];
+            String cameraIdS = getCameraIdList(manager)[cameraId];
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraIdS);
             switch( characteristics.get(CameraCharacteristics.LENS_FACING) ) {
                 case CameraMetadata.LENS_FACING_FRONT:
@@ -70,7 +164,7 @@ public class CameraControllerManager2 extends CameraControllerManager {
         CameraManager manager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
         String description = null;
         try {
-            String cameraIdS = manager.getCameraIdList()[cameraId];
+            String cameraIdS = getCameraIdList(manager)[cameraId];
             description = getDescription(null, context, cameraIdS, true, false);
         }
         catch(Throwable e) {
@@ -229,7 +323,7 @@ public class CameraControllerManager2 extends CameraControllerManager {
     public boolean allowCamera2Support(int cameraId) {
         CameraManager manager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
         try {
-            String cameraIdS = manager.getCameraIdList()[cameraId];
+            String cameraIdS = getCameraIdList(manager)[cameraId];
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraIdS);
             //return isHardwareLevelSupported(characteristics, CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY);
             return isHardwareLevelSupported(characteristics, CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED);

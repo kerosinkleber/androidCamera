@@ -2884,6 +2884,12 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
                 Log.d(TAG, "saved noise_reduction_mode: " + value);
 
             CameraController.SupportedValues supported_values = camera_controller.setNoiseReductionMode(value);
+            if( supported_values != null && value.equals("off") && !supported_values.selected_value.equals("off") && supported_values.values.contains("minimal") ) {
+                // noise reduction can't be switched off on this camera, so use the least processing available
+                if( MyDebug.LOG )
+                    Log.d(TAG, "noise_reduction_mode off not supported, use minimal");
+                supported_values = camera_controller.setNoiseReductionMode("minimal");
+            }
             // for noise reduction mode, if the stored preference wasn't supported, we stick with the device default - but don't
             // write it back to the user preference
             if( supported_values != null ) {
